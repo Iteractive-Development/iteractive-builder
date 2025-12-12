@@ -73,8 +73,8 @@ export default function AppsPage() {
 				>
 					{/* Header */}
 					<div className="mb-8">
-						<h1 className="text-6xl font-bold mb-3 font-[departureMono] text-accent">
-							MY APPS
+						<h1 className="text-6xl font-bold mb-3 font-[Cairo] text-brand-primary">
+							My Apps
 						</h1>
 						<p className="text-text-tertiary text-lg">
 							{loading

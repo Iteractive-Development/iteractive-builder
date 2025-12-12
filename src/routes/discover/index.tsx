@@ -62,8 +62,8 @@ export default function DiscoverPage() {
 				>
 					{/* Header */}
 					<div className="mb-8">
-						<h1 className="text-6xl font-bold mb-3 font-[departureMono] text-accent">
-							DISCOVER
+						<h1 className="text-6xl font-bold mb-3 font-[Cairo] text-brand-primary">
+							Discover
 						</h1>
 						<p className="text-text-tertiary text-lg">
 							Explore apps built by the community
