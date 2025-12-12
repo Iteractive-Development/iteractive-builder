@@ -110,10 +110,10 @@
 	--color-ring:
 		var(--ring);
 	--shadow-textarea:
-		6px 6px 13px 0px rgba(0, 0, 0, 0.04),
-		24px 24px 24px 0px rgba(0, 0, 0, 0.03),
-		53px 53px 32px 0px rgba(0, 0, 0, 0.02),
-		0px 0px 0px 1px rgba(217, 217, 217, 0.2);
+		6px 6px 13px 0px rgba(0, 0, 0, 0.02),
+		24px 24px 24px 0px rgba(0, 0, 0, 0.015),
+		53px 53px 32px 0px rgba(0, 0, 0, 0.01),
+		0px 0px 0px 1px rgba(217, 217, 217, 0.1);
 	--color-bg-1: var(--build-chat-colors-bg-1);
 	--color-bg-2: var(--build-chat-colors-bg-2);
 	--color-bg-3: var(--build-chat-colors-bg-3);
@@ -131,10 +131,10 @@
 	--color-text-tertiary: var(--build-chat-colors-text-tertiary);
 
 	--shadow-textarea:
-		6px 6px 13px 0px rgba(0, 0, 0, 0.04),
-		24px 24px 24px 0px rgba(0, 0, 0, 0.03),
-		53px 53px 32px 0px rgba(0, 0, 0, 0.02),
-		0px 0px 0px 1px rgba(217, 217, 217, 0.2);
+		6px 6px 13px 0px rgba(0, 0, 0, 0.02),
+		24px 24px 24px 0px rgba(0, 0, 0, 0.015),
+		53px 53px 32px 0px rgba(0, 0, 0, 0.01),
+		0px 0px 0px 1px rgba(217, 217, 217, 0.1);
 	--animate-typing-dot: typing-dot 1.2s ease-in-out infinite;
 	--animate-shake: shake 1s ease-in-out;
 }
