@@ -26,7 +26,7 @@ import { Copy } from './components/copy';
 import { useFileContentStream } from './hooks/use-file-content-stream';
 import { logger } from '@/utils/logger';
 import { useApp } from '@/hooks/use-app';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/hooks/useAuth';
 import { AgentModeDisplay } from '@/components/agent-mode-display';
 import { useGitHubExport } from '@/hooks/use-github-export';
 import { GitHubExportModal } from '@/components/github-export-modal';

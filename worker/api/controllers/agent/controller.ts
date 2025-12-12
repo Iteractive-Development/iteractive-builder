@@ -88,7 +88,7 @@ export class CodingAgentController extends BaseController {
             const userModelConfigs: Record<string, ModelConfig> = {};
             for (const [actionKey, mergedConfig] of Object.entries(userConfigsRecord)) {
                 if (mergedConfig.isUserOverride) {
-                    const { isUserOverride, userConfigId, ...modelConfig } = mergedConfig;
+                    const { isUserOverride: _isUserOverride, userConfigId: _userConfigId, ...modelConfig } = mergedConfig;
                     userModelConfigs[actionKey] = modelConfig;
                 }
             }

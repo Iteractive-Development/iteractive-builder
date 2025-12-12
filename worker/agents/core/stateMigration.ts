@@ -3,6 +3,7 @@ import { StructuredLogger } from '../../logger';
 import { TemplateDetails } from 'worker/services/sandbox/sandboxTypes';
 import { generateNanoId } from '../../utils/idGenerator';
 import { generateProjectName } from '../utils/templateCustomizer';
+import { ConversationMessage } from '../inferutils/common';
 
 export class StateMigration {
     static migrateIfNeeded(state: CodeGenState, logger: StructuredLogger): CodeGenState | null {
@@ -11,7 +12,7 @@ export class StateMigration {
         //------------------------------------------------------------------------------------
         // Migrate files from old schema
         //------------------------------------------------------------------------------------
-        const migrateFile = (file: any): any => {
+        const migrateFile = (file: Record<string, unknown>): Record<string, unknown> => {
             const hasOldFormat = 'file_path' in file || 'file_contents' in file || 'file_purpose' in file;
             
             if (hasOldFormat) {
@@ -30,7 +31,8 @@ export class StateMigration {
             
             migratedFilesMap[key] = {
                 ...migratedFile,
-            };
+                lastDiff: (file as FileState).lastDiff || '',
+            } as FileState;
             
             if (migratedFile !== file) {
                 needsMigration = true;
@@ -66,7 +68,7 @@ export class StateMigration {
             }
             
             uniqueMessages.sort((a, b) => {
-                const getTimestamp = (msg: any) => {
+                const getTimestamp = (msg: ConversationMessage) => {
                     if (msg.conversationId && typeof msg.conversationId === 'string' && msg.conversationId.startsWith('conv-')) {
                         const parts = msg.conversationId.split('-');
                         if (parts.length >= 2) {
@@ -126,19 +128,19 @@ export class StateMigration {
                 ...migratedInferenceContext
             };
             
-            delete (migratedInferenceContext as any).userApiKeys;
+            delete (migratedInferenceContext as Record<string, unknown>).userApiKeys;
             needsMigration = true;
         }
 
         //------------------------------------------------------------------------------------
         // Migrate deprecated props
         //------------------------------------------------------------------------------------  
-        const stateHasDeprecatedProps = 'latestScreenshot' in (state as any);
+        const stateHasDeprecatedProps = 'latestScreenshot' in state;
         if (stateHasDeprecatedProps) {
             needsMigration = true;
         }
 
-        const stateHasProjectUpdatesAccumulator = 'projectUpdatesAccumulator' in (state as any);
+        const stateHasProjectUpdatesAccumulator = 'projectUpdatesAccumulator' in state;
         if (!stateHasProjectUpdatesAccumulator) {
             needsMigration = true;
         }
@@ -147,9 +149,9 @@ export class StateMigration {
         // Migrate templateDetails -> templateName
         //------------------------------------------------------------------------------------
         let migratedTemplateName = state.templateName;
-        const hasTemplateDetails = 'templateDetails' in (state as any);
+        const hasTemplateDetails = 'templateDetails' in state;
         if (hasTemplateDetails) {
-            const templateDetails = (state as any).templateDetails;
+            const templateDetails = (state as { templateDetails: unknown }).templateDetails;
             migratedTemplateName = (templateDetails as TemplateDetails).name;
             needsMigration = true;
             logger.info('Migrating templateDetails to templateName', { templateName: migratedTemplateName });
@@ -189,10 +191,10 @@ export class StateMigration {
             
             // Remove deprecated fields
             if (stateHasDeprecatedProps) {
-                delete (newState as any).latestScreenshot;
+                delete (newState as Record<string, unknown>).latestScreenshot;
             }
             if (hasTemplateDetails) {
-                delete (newState as any).templateDetails;
+                delete (newState as Record<string, unknown>).templateDetails;
             }
             
             return newState;

@@ -1,11 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { apiClient, ApiError } from '@/lib/api-client';
 import type { AppWithFavoriteStatus } from '@/api-types';
 import { appEvents } from '@/lib/app-events';
 import type { AppEvent, AppDeletedEvent, AppUpdatedEvent } from '@/lib/app-events';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/hooks/useAuth';
+import { RECENT_APPS_LIMIT } from '@/constants/app-constants';
 
-interface AppsDataState {
+export interface AppsDataState {
   allApps: AppWithFavoriteStatus[];
   favoriteApps: AppWithFavoriteStatus[];
   recentApps: AppWithFavoriteStatus[];
@@ -20,15 +22,13 @@ interface AppsDataState {
   moreRecentAvailable: boolean;
 }
 
-interface AppsDataContextValue extends AppsDataState {
+export interface AppsDataContextValue extends AppsDataState {
   refetchAllApps: () => void;
   refetchFavoriteApps: () => void;
   refetchAll: () => void;
 }
 
-const AppsDataContext = createContext<AppsDataContextValue | null>(null);
-
-const RECENT_APPS_LIMIT = 10;
+export const AppsDataContext = createContext<AppsDataContextValue | null>(null);
 
 interface AppsDataProviderProps {
   children: React.ReactNode;
@@ -269,10 +269,3 @@ export function AppsDataProvider({ children }: AppsDataProviderProps) {
   );
 }
 
-export function useAppsData() {
-  const context = useContext(AppsDataContext);
-  if (!context) {
-    throw new Error('useAppsData must be used within an AppsDataProvider');
-  }
-  return context;
-}

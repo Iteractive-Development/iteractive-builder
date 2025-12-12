@@ -1,3 +1,5 @@
+import { WranglerConfig, DurableObjectMigration, WorkerBinding } from '../types';
+
 /**
  * Calculate SHA256 hash of content (first 32 chars)
  * This matches Cloudflare's expected hash format
@@ -73,7 +75,7 @@ export function getMimeType(filePath: string): string {
 /**
  * Validate required configuration fields
  */
-export function validateConfig(config: any): void {
+export function validateConfig(config: Partial<WranglerConfig>): void {
 	if (!config.name) {
 		throw new Error('Worker name is required in configuration');
 	}
@@ -105,34 +107,36 @@ export async function createAssetManifest(
 /**
  * Merge migration configurations
  */
-export function mergeMigrations(migrations: any[] | undefined): any | null {
+export function mergeMigrations(migrations: WranglerConfig['migrations'] | undefined): DurableObjectMigration | null {
 	if (!migrations || migrations.length === 0) {
 		return null;
 	}
 
-	const mergedMigration: any = {
+	const mergedMigration: DurableObjectMigration = {
 		tag: migrations[migrations.length - 1].tag, // Use latest tag
-		new_classes: [],
-		new_sqlite_classes: [],
 	};
+
+	// Initialize arrays if needed
+	const newClasses: string[] = [];
+	const newSqliteClasses: string[] = [];
 
 	// Collect all classes from all migrations
 	for (const migration of migrations) {
 		if (migration.new_classes) {
-			mergedMigration.new_classes.push(...migration.new_classes);
+			newClasses.push(...migration.new_classes);
 		}
 		if (migration.new_sqlite_classes) {
-			mergedMigration.new_sqlite_classes.push(
-				...migration.new_sqlite_classes,
-			);
+			newSqliteClasses.push(...migration.new_sqlite_classes);
 		}
 	}
 
-	// Remove empty arrays
-	if (mergedMigration.new_classes.length === 0)
-		delete mergedMigration.new_classes;
-	if (mergedMigration.new_sqlite_classes.length === 0)
-		delete mergedMigration.new_sqlite_classes;
+	// Only include arrays if they have content
+	if (newClasses.length > 0) {
+		mergedMigration.new_classes = newClasses;
+	}
+	if (newSqliteClasses.length > 0) {
+		mergedMigration.new_sqlite_classes = newSqliteClasses;
+	}
 
 	// Return null if no migrations to apply
 	if (!mergedMigration.new_classes && !mergedMigration.new_sqlite_classes) {
@@ -145,7 +149,7 @@ export function mergeMigrations(migrations: any[] | undefined): any | null {
 /**
  * Extract Durable Object class names from merged migration
  */
-export function extractDurableObjectClasses(mergedMigration: any): string[] {
+export function extractDurableObjectClasses(mergedMigration: DurableObjectMigration | null): string[] {
 	if (!mergedMigration) return [];
 
 	return [
@@ -159,10 +163,10 @@ export function extractDurableObjectClasses(mergedMigration: any): string[] {
  * DRY implementation to avoid code duplication
  */
 export function buildWorkerBindings(
-	config: any,
+	config: WranglerConfig,
 	hasAssets: boolean = false,
-): any[] {
-	const bindings: any[] = [];
+): WorkerBinding[] {
+	const bindings: WorkerBinding[] = [];
 
 	// Add asset binding if assets are present
 	if (hasAssets) {

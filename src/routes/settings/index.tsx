@@ -24,8 +24,8 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/contexts/auth-context';
-// import { useTheme } from '@/contexts/theme-context';
+import { useAuth } from '@/hooks/useAuth';
+// import { useTheme } from '@/hooks/useTheme';
 import { Badge } from '@/components/ui/badge';
 import {
 	AlertDialog,

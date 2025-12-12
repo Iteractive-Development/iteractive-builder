@@ -3,7 +3,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { AuthButton } from '../auth/auth-button';
 import { ThemeToggle } from '../theme-toggle';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/hooks/useAuth';
 import { ChevronRight, AlertCircle } from 'lucide-react';
 import { usePlatformStatus } from '@/hooks/use-platform-status';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';

@@ -4,8 +4,8 @@
  */
 
 import React, { useCallback } from 'react';
-import { useAuth } from '../contexts/auth-context';
-import { useAuthModal } from '../components/auth/AuthModalProvider';
+import { useAuth } from './useAuth';
+import { useAuthModal } from './useAuthModal';
 import { AuthUser } from '@/api-types';
 
 export interface AuthGuardOptions {

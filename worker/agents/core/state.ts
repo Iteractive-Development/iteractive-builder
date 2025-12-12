@@ -7,6 +7,7 @@ import type { InferenceContext } from '../inferutils/config.types';
 
 export interface FileState extends FileOutputType {
     lastDiff: string;
+    [key: string]: unknown;
 }
 
 export interface PhaseState extends PhaseConceptType {

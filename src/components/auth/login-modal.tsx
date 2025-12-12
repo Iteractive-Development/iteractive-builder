@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/hooks/useAuth';
 // import {
 // 	validateEmail,
 // 	validatePassword,
@@ -149,7 +149,7 @@ export function LoginModal({
 				await onRegister({ email, password, name: name.trim() });
 			}
 			// Don't auto-close here - let the parent handle success/error
-		} catch (err) {
+		} catch {
 			// Error handling is done in the auth context
 		} finally {
 			setIsLoading(false);

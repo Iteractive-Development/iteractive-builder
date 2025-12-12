@@ -3,7 +3,7 @@ import { NDJSONStreamParser } from './ndjson-parser';
 
 describe('NDJSONStreamParser', () => {
   let parser: NDJSONStreamParser;
-  let receivedMessages: any[];
+  let receivedMessages: unknown[];
 
   beforeEach(() => {
     receivedMessages = [];

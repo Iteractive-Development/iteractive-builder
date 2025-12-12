@@ -29,7 +29,7 @@ export function GitCloneCommand({ cloneUrl, appTitle }: GitCloneCommandProps) {
 			setCopied(true);
 			toast.success('Clone command copied!');
 			setTimeout(() => setCopied(false), 2500);
-		} catch (error) {
+		} catch {
 			toast.error('Failed to copy');
 		}
 	};

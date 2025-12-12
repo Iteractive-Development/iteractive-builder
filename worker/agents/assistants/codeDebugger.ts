@@ -226,8 +226,8 @@ generate_files({
   phase_name: "Add data export utilities",
   phase_description: "Create helper functions for exporting data as CSV/JSON",
   requirements: [
-    "Create src/utils/exportHelpers.ts with exportToCSV(data: any[], filename: string) function",
-    "Create src/utils/exportHelpers.ts with exportToJSON(data: any[], filename: string) function",
+    "Create src/utils/exportHelpers.ts with exportToCSV(data: Record<string, unknown>[], filename: string) function",
+    "Create src/utils/exportHelpers.ts with exportToJSON(data: Record<string, unknown>[], filename: string) function",
     "Add proper TypeScript types for all export functions",
     "Functions should trigger browser download with the given filename"
   ],
@@ -658,9 +658,9 @@ If you're genuinely stuck after trying 3 different approaches, honestly report: 
 
         // Wrap tools with loop detection
         const rawTools = buildDebugTools(session, logger, toolRenderer);
-        const tools: ToolDefinition<any, any>[] = rawTools.map((tool) => ({
+        const tools: ToolDefinition<Record<string, unknown>, unknown>[] = rawTools.map((tool) => ({
             ...tool,
-            implementation: async (args: any) => {
+            implementation: async (args: Record<string, unknown>) => {
                 // Check for repetition before executing
                 if (this.detectRepetition(tool.function.name, args)) {
                     this.logger.warn(`Loop detected for tool: ${tool.function.name}`);

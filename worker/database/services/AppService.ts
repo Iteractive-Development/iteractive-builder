@@ -90,7 +90,7 @@ export class AppService extends BaseService {
                 this.logger.error('executeRankedQuery failed', {
                     errorMessage: error instanceof Error ? error.message : String(error),
                     errorName: error instanceof Error ? error.name : 'UnknownError',
-                    errorCause: (error as any)?.cause,
+                    errorCause: (error as { cause?: unknown })?.cause,
                     errorStack: error instanceof Error ? error.stack?.split('\n').slice(0, 5).join('\n') : undefined,
                     sort,
                     period,
@@ -109,7 +109,7 @@ export class AppService extends BaseService {
                     this.logger.error('Count query failed', {
                         errorMessage: error instanceof Error ? error.message : String(error),
                         errorName: error instanceof Error ? error.name : 'UnknownError',
-                        errorCause: (error as any)?.cause
+                        errorCause: (error as { cause?: unknown })?.cause
                     });
                     throw error;
                 });
@@ -162,7 +162,7 @@ export class AppService extends BaseService {
             this.logger.error('getPublicApps failed', {
                 errorMessage: error instanceof Error ? error.message : String(error),
                 errorName: error instanceof Error ? error.name : 'UnknownError',
-                errorCause: (error as any)?.cause,
+                errorCause: (error as { cause?: unknown })?.cause,
                 errorType: error?.constructor?.name || 'Unknown',
                 options
             });
@@ -929,7 +929,7 @@ export class AppService extends BaseService {
                 starsResult.forEach(s => userStars.add(s.appId));
                 favoritesResult.forEach(f => userFavorites.add(f.appId));
             }
-        } catch (error) {
+        } catch {
             // Return empty sets on error to not break the app
             return { userStars: new Set(), userFavorites: new Set() };
         }
@@ -945,14 +945,16 @@ export class AppService extends BaseService {
         switch (period) {
             case 'today':
                 return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            case 'week':
+            case 'week': {
                 const weekAgo = new Date(now);
                 weekAgo.setDate(now.getDate() - 7);
                 return weekAgo;
-            case 'month':
+            }
+            case 'month': {
                 const monthAgo = new Date(now);
                 monthAgo.setMonth(now.getMonth() - 1);
                 return monthAgo;
+            }
             case 'all':
             default:
                 return new Date(0); // Beginning of time

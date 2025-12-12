@@ -380,7 +380,7 @@ export class AuthController extends BaseController {
                 },
                 sessionId: userSession.sessionId
             });
-        } catch (error) {
+        } catch {
             return AuthController.createSuccessResponse({
                 authenticated: false,
                 user: null

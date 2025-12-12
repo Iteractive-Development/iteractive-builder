@@ -1,7 +1,7 @@
 import { apiClient, ApiError } from '@/lib/api-client';
 import type { AppWithFavoriteStatus } from '@/api-types';
 import { useAuthGuard } from './useAuthGuard';
-import { useAppsData } from '@/contexts/apps-data-context';
+import { useAppsData } from './useAppsData';
 
 interface AppHookState<T> {
   apps: T[];

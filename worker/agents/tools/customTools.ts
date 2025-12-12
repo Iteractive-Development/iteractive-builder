@@ -41,7 +41,7 @@ export function buildTools(
     logger: StructuredLogger,
     toolRenderer: RenderToolCall,
     streamCb: (chunk: string) => void,
-): ToolDefinition<any, any>[] {
+): ToolDefinition<any, any>[] { // eslint-disable-line @typescript-eslint/no-explicit-any
     return [
         toolWebSearchDefinition,
         toolFeedbackDefinition,
@@ -59,7 +59,7 @@ export function buildTools(
     ];
 }
 
-export function buildDebugTools(session: DebugSession, logger: StructuredLogger, toolRenderer?: RenderToolCall): ToolDefinition<any, any>[] {
+export function buildDebugTools(session: DebugSession, logger: StructuredLogger, toolRenderer?: RenderToolCall): ToolDefinition<any, any>[] { // eslint-disable-line @typescript-eslint/no-explicit-any
   const tools = [
     createGetLogsTool(session.agent, logger),
     createGetRuntimeErrorsTool(session.agent, logger),

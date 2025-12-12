@@ -1,15 +1,17 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * Enhanced Auth Context
  * Provides OAuth + Email/Password authentication with backward compatibility
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { apiClient, ApiError } from '@/lib/api-client';
 import { useSentryUser } from '@/hooks/useSentryUser';
+import { TOKEN_REFRESH_INTERVAL } from '@/constants/app-constants';
 import type { AuthSession, AuthUser } from '../api-types';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
   session: AuthSession | null;
@@ -43,10 +45,7 @@ interface AuthContextType {
   clearIntendedUrl: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Token refresh interval - refresh every 10 minutes
-const TOKEN_REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour (check less frequently since tokens last 24h)
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -94,56 +93,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
 
-  // Fetch auth providers configuration
-  const fetchAuthProviders = useCallback(async () => {
-    try {
-      const response = await apiClient.getAuthProviders();
-      if (response.success && response.data) {
-        setAuthProviders(response.data.providers);
-        setHasOAuth(response.data.hasOAuth);
-        setRequiresEmailAuth(response.data.requiresEmailAuth);
-      }
-    } catch (error) {
-      console.warn('Failed to fetch auth providers:', error);
-      // Fallback to defaults
-      setAuthProviders({ google: false, github: false, email: true });
-      setHasOAuth(false);
-      setRequiresEmailAuth(true);
-    }
-  }, []);
-
-  // Check authentication status
-  const checkAuth = useCallback(async () => {
-    try {
-      const response = await apiClient.getProfile(true);
-      
-      if (response.success && response.data?.user) {
-        setUser({ ...response.data.user, isAnonymous: false } as AuthUser);
-        setToken(null); // Profile endpoint doesn't return token, cookies are used
-        setSession({
-          userId: response.data.user.id,
-          email: response.data.user.email,
-          sessionId: response.data.sessionId || response.data.user.id,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours expiry
-        });
-        
-        // Setup token refresh
-        setupTokenRefresh();
-      } else {
-        setUser(null);
-        setToken(null);
-        setSession(null);
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      setUser(null);
-      setToken(null);
-      setSession(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   // Setup automatic session validation (cookie-based)
   const setupTokenRefresh = useCallback(() => {
     // Clear any existing timer
@@ -168,6 +117,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }, TOKEN_REFRESH_INTERVAL);
   }, []);
+
+  // Fetch auth providers configuration
+  const fetchAuthProviders = useCallback(async () => {
+    try {
+      const response = await apiClient.getAuthProviders();
+      if (response.success && response.data) {
+        setAuthProviders(response.data.providers);
+        setHasOAuth(response.data.hasOAuth);
+        setRequiresEmailAuth(response.data.requiresEmailAuth);
+      }
+    } catch (error) {
+      console.warn('Failed to fetch auth providers:', error);
+      // Fallback to defaults
+      setAuthProviders({ google: false, github: false, email: true });
+      setHasOAuth(false);
+      setRequiresEmailAuth(true);
+    }
+  }, []);
+
+  // Check authentication status
+  const checkAuth = useCallback(async () => {
+    try {
+      const response = await apiClient.getProfile(true);
+
+      if (response.success && response.data?.user) {
+        setUser({ ...response.data.user, isAnonymous: false } as AuthUser);
+        setToken(null); // Profile endpoint doesn't return token, cookies are used
+        setSession({
+          userId: response.data.user.id,
+          email: response.data.user.email,
+          sessionId: response.data.sessionId || response.data.user.id,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours expiry
+        });
+
+        // Setup token refresh
+        setupTokenRefresh();
+      } else {
+        setUser(null);
+        setToken(null);
+        setSession(null);
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      setUser(null);
+      setToken(null);
+      setSession(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setupTokenRefresh]);
 
   // Cleanup refresh timer on unmount
   useEffect(() => {
@@ -219,7 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           expiresAt: response.data.expiresAt,
         });
         setupTokenRefresh();
-        
+
         // Navigate to intended URL or default to home
         const intendedUrl = getIntendedUrl();
         clearIntendedUrl();
@@ -329,24 +328,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
 
-// Helper hook for protected routes
-export function useRequireAuth(redirectTo = '/') {
-  const { isAuthenticated, isLoading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      navigate(redirectTo);
-    }
-  }, [isAuthenticated, isLoading, navigate, redirectTo]);
-
-  return { isAuthenticated, isLoading };
-}

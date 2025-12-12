@@ -1,5 +1,6 @@
 import type { WebSocket } from 'partysocket';
-import type { WebSocketMessage, BlueprintType, ConversationMessage } from '@/api-types';
+import type { WebSocketMessage, BlueprintType, ConversationMessage, FileType, FileState } from '@/api-types';
+import type { ProjectStage } from '../utils/project-stage-helpers';
 import { deduplicateMessages, isAssistantMessageDuplicate } from './deduplicate-messages';
 import { logger } from '@/utils/logger';
 import { getFileType } from '@/utils/string';
@@ -20,14 +21,14 @@ import {
 } from './message-helpers';
 import { completeStages } from './project-stage-helpers';
 import { sendWebSocketMessage } from './websocket-helpers';
-import type { FileType, PhaseTimelineItem } from '../hooks/use-chat';
+import type { PhaseTimelineItem } from '../hooks/use-chat';
 import { toast } from 'sonner';
 
 export interface HandleMessageDeps {
     // State setters
     setFiles: React.Dispatch<React.SetStateAction<FileType[]>>;
     setPhaseTimeline: React.Dispatch<React.SetStateAction<PhaseTimelineItem[]>>;
-    setProjectStages: React.Dispatch<React.SetStateAction<any[]>>;
+    setProjectStages: React.Dispatch<React.SetStateAction<ProjectStage[]>>;
     setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
     setBlueprint: React.Dispatch<React.SetStateAction<BlueprintType | undefined>>;
     setQuery: React.Dispatch<React.SetStateAction<string | undefined>>;
@@ -56,12 +57,12 @@ export interface HandleMessageDeps {
     files: FileType[];
     phaseTimeline: PhaseTimelineItem[];
     previewUrl: string | undefined;
-    projectStages: any[];
+    projectStages: ProjectStage[];
     isGenerating: boolean;
     urlChatId: string | undefined;
     
     // Functions
-    updateStage: (stageId: string, updates: any) => void;
+    updateStage: (stageId: ProjectStage['id'], updates: Partial<Omit<ProjectStage, 'id'>>) => void;
     sendMessage: (message: ConversationMessage) => void;
     loadBootstrapFiles: (files: FileType[]) => void;
     onDebugMessage?: (
@@ -180,7 +181,7 @@ export function createWebSocketMessageHandler(deps: HandleMessageDeps) {
 
                     if (state.generatedFilesMap && files.length === 0) {
                         setFiles(
-                            Object.values(state.generatedFilesMap).map((file: any) => ({
+                            Object.values(state.generatedFilesMap).map((file: FileState) => ({
                                 filePath: file.filePath,
                                 fileContents: file.fileContents,
                                 isGenerating: false,
@@ -196,7 +197,7 @@ export function createWebSocketMessageHandler(deps: HandleMessageDeps) {
                         // If not actively generating, mark incomplete phases as cancelled (they were interrupted)
                         const isActivelyGenerating = state.shouldBeGenerating === true;
                         
-                        const timeline = state.generatedPhases.map((phase: any, index: number) => {
+                        const timeline = state.generatedPhases.map((phase: { name: string; description: string; completed: boolean; files: Array<{ path: string; purpose: string }> }, index: number) => {
                             // Determine phase status:
                             // - completed if explicitly marked complete
                             // - cancelled if incomplete and not actively generating (interrupted)
@@ -212,7 +213,7 @@ export function createWebSocketMessageHandler(deps: HandleMessageDeps) {
                                 name: phase.name,
                                 description: phase.description,
                                 status: phaseStatus,
-                                files: phase.files.map((filesConcept: any) => {
+                                files: phase.files.map((filesConcept: { path: string; purpose: string }) => {
                                     const file = state.generatedFilesMap?.[filesConcept.path];
                                     // File status:
                                     // - completed if it exists in generated files
@@ -269,7 +270,7 @@ export function createWebSocketMessageHandler(deps: HandleMessageDeps) {
                     logger.debug('🔄 shouldBeGenerating=true, updating UI to active state');
                     updateStage('code', { status: 'active' });
                 } else if (!state.shouldBeGenerating) {
-                    const codeStage = projectStages.find((stage: any) => stage.id === 'code');
+                    const codeStage = projectStages.find((stage: ProjectStage) => stage.id === 'code');
                     if (codeStage?.status === 'active' && !isGenerating) {
                         if (state.generatedFilesMap && Object.keys(state.generatedFilesMap).length > 0) {
                             updateStage('code', { status: 'completed' });
@@ -508,7 +509,7 @@ export function createWebSocketMessageHandler(deps: HandleMessageDeps) {
 
             case 'code_reviewed': {
                 const reviewData = message.review;
-                const totalIssues = reviewData?.filesToFix?.reduce((count: number, file: any) =>
+                const totalIssues = reviewData?.filesToFix?.reduce((count: number, file: { issues: Array<unknown> }) =>
                     count + file.issues.length, 0) || 0;
 
                 let reviewMessage = 'Code review complete';
@@ -528,9 +529,9 @@ export function createWebSocketMessageHandler(deps: HandleMessageDeps) {
                 // Update runtime error count
                 deps.setRuntimeErrorCount(message.count || message.errors?.length || 0);
                 
-                onDebugMessage?.('error', 
+                onDebugMessage?.('error',
                     `Runtime Error (${message.count} errors)`,
-                    message.errors.map((e: any) => `${e.message}\nStack: ${e.stack || 'N/A'}`).join('\n\n'),
+                    message.errors.map((e: { message: string; stack?: string }) => `${e.message}\nStack: ${e.stack || 'N/A'}`).join('\n\n'),
                     'Runtime Detection'
                 );
                 break;
@@ -595,7 +596,7 @@ export function createWebSocketMessageHandler(deps: HandleMessageDeps) {
                             id: `${message.phase.name}-${Date.now()}`,
                             name: message.phase.name,
                             description: message.phase.description,
-                            files: message.phase.files?.map((f: any) => ({
+                            files: message.phase.files?.map((f: { path: string; purpose: string }) => ({
                                 path: f.path,
                                 purpose: f.purpose,
                                 status: 'generating' as const,

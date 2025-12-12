@@ -76,9 +76,9 @@ export function handleWebSocketMessage(agent: SimpleCodeGeneratorAgent, connecti
                     logger.error('Error during screenshot capture:', error);
                 });
                 break;
-            case WebSocketMessageRequests.STOP_GENERATION:
+            case WebSocketMessageRequests.STOP_GENERATION: {
                 logger.info('User requested to stop generation');
-                
+
                 // Cancel current inference operation
                 const wasCancelled = agent.cancelCurrentInference();
                 
@@ -89,11 +89,12 @@ export function handleWebSocketMessage(agent: SimpleCodeGeneratorAgent, connecti
                 });
                 
                 sendToConnection(connection, WebSocketMessageResponses.GENERATION_STOPPED, {
-                    message: wasCancelled 
+                    message: wasCancelled
                         ? 'Inference operation cancelled successfully'
                         : 'No active inference to cancel'
                 });
                 break;
+            }
             case WebSocketMessageRequests.RESUME_GENERATION:
                 // Set shouldBeGenerating and restart generation
                 logger.info('Resuming code generation');

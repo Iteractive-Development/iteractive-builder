@@ -9,8 +9,8 @@ export interface ResourceProvisionResult {
 
 export interface CloudflareKVNamespaceResponse {
     success: boolean;
-    errors: any[];
-    messages: any[];
+    errors: Array<{ code: number; message: string }>;
+    messages: Array<{ code: number; message: string }>;
     result?: {
         id: string;
         title: string;
@@ -20,8 +20,8 @@ export interface CloudflareKVNamespaceResponse {
 
 export interface CloudflareD1DatabaseResponse {
     success: boolean;
-    errors: any[];
-    messages: any[];
+    errors: Array<{ code: number; message: string }>;
+    messages: Array<{ code: number; message: string }>;
     result?: {
         uuid: string;
         name: string;

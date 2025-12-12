@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router';
 import { AuthProvider } from './contexts/auth-context';
+import { AppsDataProvider } from './contexts/apps-data-context';
 import { AuthModalProvider } from './components/auth/AuthModalProvider';
 import { ThemeProvider } from './contexts/theme-context';
 import { Toaster } from './components/ui/sonner';
@@ -11,12 +12,14 @@ export default function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
-          <AuthModalProvider>
-            <AppLayout>
-              <Outlet />
-            </AppLayout>
-            <Toaster richColors position="top-right" />
-          </AuthModalProvider>
+          <AppsDataProvider>
+            <AuthModalProvider>
+              <AppLayout>
+                <Outlet />
+              </AppLayout>
+              <Toaster richColors position="top-right" />
+            </AuthModalProvider>
+          </AppsDataProvider>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>

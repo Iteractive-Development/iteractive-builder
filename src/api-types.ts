@@ -146,8 +146,9 @@ export type {
   FileOutputType as GeneratedFile,
 } from 'worker/agents/schemas';
 
-export type { 
-  CodeGenState 
+export type {
+  CodeGenState,
+  FileState
 } from 'worker/agents/core/state';
 
 export type {

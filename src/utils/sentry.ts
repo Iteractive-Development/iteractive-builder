@@ -73,7 +73,7 @@ export function clearSentryUser() {
 }
 
 // Helper to capture custom events
-export function captureEvent(message: string, level: Sentry.SeverityLevel = 'info', extra?: Record<string, any>) {
+export function captureEvent(message: string, level: Sentry.SeverityLevel = 'info', extra?: Record<string, unknown>) {
   Sentry.captureMessage(message, {
     level,
     extra,
@@ -85,7 +85,7 @@ export function addBreadcrumb(
   message: string,
   category: string,
   level: Sentry.SeverityLevel = 'info',
-  data?: Record<string, any>
+  data?: Record<string, unknown>
 ) {
   Sentry.addBreadcrumb({
     message,

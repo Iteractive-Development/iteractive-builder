@@ -1,4 +1,11 @@
 import { PhaseConceptType, FileOutputType, PhaseConceptSchema } from '../schemas';
+
+// Global template variables - these are replaced at runtime by the GitHub service
+declare global {
+  var cloudflarebutton: string;
+  var repositoryUrl: string;
+}
+
 import { IssueReport } from '../domain/values/IssueReport';
 import { createUserMessage, createMultiModalUserMessage } from '../inferutils/common';
 import { executeInference } from '../inferutils/infer';
@@ -349,7 +356,7 @@ The README should be professional, well-structured, and provide clear instructio
 - Include setup/installation instructions using bun (not npm/yarn)
 - Add usage examples and development instructions
 - Include a deployment section with Cloudflare-specific instructions
-- **IMPORTANT**: Add a \`[cloudflarebutton]\` placeholder near the top and another in the deployment section for the Cloudflare deploy button. Write the **EXACT** string except the backticks and DON'T enclose it in any other button or anything. We will replace it with https://deploy.workers.cloudflare.com/?url=\${repositoryUrl\} when the repository is created.
+- **IMPORTANT**: Add a cloudflare button placeholder near the top and another in the deployment section. Write the exact string with cloudflarebutton in brackets but do not enclose it in any other button. We will replace it with the proper deploy button URL when the repository is created.
 - Structure the content clearly with appropriate headers and sections
 - Be concise but comprehensive - focus on essential information
 - Use professional tone suitable for open source projects
@@ -522,7 +529,7 @@ export class PhaseImplementationOperation extends AgentOperation<PhaseImplementa
         logger.info("Generating README.md for the project");
 
         try {
-            let readmePrompt = README_GENERATION_PROMPT;
+            const readmePrompt = README_GENERATION_PROMPT;
             const messages = [...getSystemPromptWithProjectContext(SYSTEM_PROMPT, context, CodeSerializerType.SCOF), createUserMessage(readmePrompt)];
 
             const results = await executeInference({

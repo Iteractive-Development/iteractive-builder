@@ -12,11 +12,42 @@ interface GitToolArgs {
 	includeDiff?: boolean;
 }
 
+interface GitCommitResult {
+	oid: string | null;
+}
+
+interface GitLogResult {
+	success: boolean;
+	commits: Array<{
+		oid: string;
+		message: string;
+		author: string;
+		timestamp: string;
+	}>;
+}
+
+interface GitShowResult {
+	success: boolean;
+	oid: string;
+	message: string;
+	author: string;
+	timestamp: string;
+	files: number;
+	diff?: string;
+}
+
+interface GitResetResult {
+	success: boolean;
+	oid: string | null;
+}
+
+type GitToolData = GitCommitResult | GitLogResult | GitShowResult | GitResetResult;
+
 export function createGitTool(
 	agent: CodingAgentInterface,
 	logger: StructuredLogger,
 	options?: { excludeCommands?: GitCommand[] }
-): ToolDefinition<GitToolArgs, { success: boolean; data?: any; message?: string }> {
+): ToolDefinition<GitToolArgs, { success: boolean; data?: GitToolData; message?: string }> {
 	const allCommands: GitCommand[] = ['commit', 'log', 'show', 'reset'];
 	const allowedCommands = options?.excludeCommands
 		? allCommands.filter(cmd => !options.excludeCommands!.includes(cmd))
@@ -83,7 +114,7 @@ export function createGitTool(
 						
 						return {
 							success: true,
-							data: { oid: commitOid },
+							data: { oid: commitOid } as GitCommitResult,
 							message: commitOid ? `Committed: ${message}` : 'No changes to commit'
 						};
 					}
@@ -94,7 +125,7 @@ export function createGitTool(
 						
 						return {
 							success: true,
-							data: { commits },
+							data: { success: true, commits },
 							message: `Retrieved ${commits.length} commits`
 						};
 					}
@@ -112,7 +143,7 @@ export function createGitTool(
 						
 						return {
 							success: true,
-							data: result,
+							data: { success: true, ...result } as GitShowResult,
 							message: `Commit ${result.oid.substring(0, 7)}: ${result.message} (${result.files} files)`
 						};
 					}
@@ -130,7 +161,10 @@ export function createGitTool(
 						
 						return {
 							success: true,
-							data: result,
+							data: {
+								success: true,
+								oid: result.ref
+							} as GitResetResult,
 							message: `Reset to commit ${result.ref.substring(0, 7)}. ${result.filesReset} files updated. HEAD moved.`
 						};
 					}

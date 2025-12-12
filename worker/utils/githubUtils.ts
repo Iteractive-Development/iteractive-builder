@@ -42,7 +42,7 @@ export async function extractGitHubErrorText(
             const errorText = await response.text();
             return errorText || `HTTP ${response.status}`;
         }
-    } catch (parseError) {
+    } catch {
         // If parsing fails, return generic error
         return `HTTP ${response.status}`;
     }

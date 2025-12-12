@@ -353,6 +353,7 @@ export type InferenceMetadata = {
     agentId: string;
     userId: string;
     // llmRateLimits: LLMCallsRateLimitConfig;
+    [key: string]: unknown;
 }
 
 export interface InferenceContext extends InferenceMetadata {

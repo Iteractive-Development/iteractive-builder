@@ -142,7 +142,7 @@ export class ModelProvidersController extends BaseController {
             return ModelProvidersController.createSuccessResponse<ModelProviderCreateData>({
                 provider
             });
-        } catch (error) {
+        } catch {
             return ModelProvidersController.createErrorResponse<ModelProviderCreateData>(
                 'Failed to create provider',
                 500

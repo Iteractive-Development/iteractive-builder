@@ -5,6 +5,7 @@
 import { createLogger } from '../logger';
 import { SecurityError } from 'shared/types/errors';
 import { errorResponse } from '../api/responses';
+import { AuthUser } from '../types/auth-types';
 
 const logger = createLogger('ErrorHandling');
 
@@ -30,7 +31,7 @@ export class AppError extends Error {
         public type: AppErrorType,
         message: string,
         public statusCode: number = 500,
-        public context?: Record<string, any>
+        public context?: Record<string, unknown>
     ) {
         super(message);
         this.name = 'AppError';
@@ -46,9 +47,9 @@ export class ErrorHandler {
      * Handle and log error with context
      */
     static handleError(
-        error: unknown, 
-        operation: string, 
-        context?: Record<string, any>
+        error: unknown,
+        operation: string,
+        context?: Record<string, unknown>
     ): AppError {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         
@@ -95,7 +96,7 @@ export class ErrorHandler {
     static async safeExecute<T>(
         operation: () => Promise<T>,
         operationName: string,
-        context?: Record<string, any>
+        context?: Record<string, unknown>
     ): Promise<{ success: true; data: T } | { success: false; error: AppError }> {
         try {
             const data = await operation();
@@ -109,7 +110,7 @@ export class ErrorHandler {
     /**
      * Wrap async function with error handling
      */
-    static wrapAsync<TArgs extends any[], TReturn>(
+    static wrapAsync<TArgs extends unknown[], TReturn>(
         fn: (...args: TArgs) => Promise<TReturn>,
         operationName: string,
         defaultReturn?: TReturn
@@ -135,42 +136,49 @@ export class ErrorHandler {
  */
 export class ErrorFactory {
     
-    static validationError(message: string, context?: Record<string, any>): AppError {
+    static validationError(message: string, context?: Record<string, unknown>): AppError {
         return new AppError(AppErrorType.VALIDATION_ERROR, message, 400, context);
     }
 
-    static authenticationError(message: string = 'Authentication required', context?: Record<string, any>): AppError {
+    static authenticationError(message: string = 'Authentication required', context?: Record<string, unknown>): AppError {
         return new AppError(AppErrorType.AUTHENTICATION_ERROR, message, 401, context);
     }
 
-    static authorizationError(message: string = 'Insufficient permissions', context?: Record<string, any>): AppError {
+    static authorizationError(message: string = 'Insufficient permissions', context?: Record<string, unknown>): AppError {
         return new AppError(AppErrorType.AUTHORIZATION_ERROR, message, 403, context);
     }
 
-    static notFoundError(resource: string, context?: Record<string, any>): AppError {
+    static notFoundError(resource: string, context?: Record<string, unknown>): AppError {
         return new AppError(AppErrorType.NOT_FOUND_ERROR, `${resource} not found`, 404, context);
     }
 
-    static conflictError(message: string, context?: Record<string, any>): AppError {
+    static conflictError(message: string, context?: Record<string, unknown>): AppError {
         return new AppError(AppErrorType.CONFLICT_ERROR, message, 409, context);
     }
 
-    static rateLimitError(message: string = 'Rate limit exceeded', context?: Record<string, any>): AppError {
+    static rateLimitError(message: string = 'Rate limit exceeded', context?: Record<string, unknown>): AppError {
         return new AppError(AppErrorType.RATE_LIMIT_ERROR, message, 429, context);
     }
 
-    static externalServiceError(service: string, context?: Record<string, any>): AppError {
+    static externalServiceError(service: string, context?: Record<string, unknown>): AppError {
         return new AppError(
-            AppErrorType.EXTERNAL_SERVICE_ERROR, 
-            `External service ${service} unavailable`, 
-            502, 
+            AppErrorType.EXTERNAL_SERVICE_ERROR,
+            `External service ${service} unavailable`,
+            502,
             context
         );
     }
 
-    static internalError(message: string = 'Internal server error', context?: Record<string, any>): AppError {
+    static internalError(message: string = 'Internal server error', context?: Record<string, unknown>): AppError {
         return new AppError(AppErrorType.INTERNAL_ERROR, message, 500, context);
     }
+}
+
+/**
+ * Resource interface for ownership verification
+ */
+interface Resource {
+    userId: string;
 }
 
 /**
@@ -184,7 +192,7 @@ export class ControllerErrorHandler {
     static async handleControllerOperation<T>(
         operation: () => Promise<T>,
         operationName: string,
-        context?: Record<string, any>
+        context?: Record<string, unknown>
     ): Promise<T | Response> {
         try {
             return await operation();
@@ -198,7 +206,7 @@ export class ControllerErrorHandler {
      * Validate required parameters
      */
     static validateRequiredParams(
-        params: Record<string, any>, 
+        params: Record<string, unknown>,
         requiredFields: string[]
     ): void {
         for (const field of requiredFields) {
@@ -211,7 +219,7 @@ export class ControllerErrorHandler {
     /**
      * Handle authentication requirement
      */
-    static requireAuthentication(user: any): void {
+    static requireAuthentication(user: AuthUser | null | undefined): void {
         if (!user) {
             throw ErrorFactory.authenticationError();
         }
@@ -220,11 +228,11 @@ export class ControllerErrorHandler {
     /**
      * Handle resource ownership verification
      */
-    static requireResourceOwnership(resource: any, userId: string, resourceName: string): void {
+    static requireResourceOwnership(resource: Resource | null | undefined, userId: string, resourceName: string): void {
         if (!resource) {
             throw ErrorFactory.notFoundError(resourceName);
         }
-        
+
         if (resource.userId !== userId) {
             throw ErrorFactory.authorizationError(`Access denied to ${resourceName}`);
         }
@@ -236,7 +244,7 @@ export class ControllerErrorHandler {
     static async parseJsonBody<T>(request: Request): Promise<T> {
         try {
             return await request.json() as T;
-        } catch (error) {
+        } catch {
             throw ErrorFactory.validationError('Invalid JSON in request body');
         }
     }
@@ -245,9 +253,9 @@ export class ControllerErrorHandler {
      * Handle external service errors
      */
     static handleExternalServiceError(
-        serviceName: string, 
-        error: unknown, 
-        context?: Record<string, any>
+        serviceName: string,
+        error: unknown,
+        context?: Record<string, unknown>
     ): never {
         logger.error(`External service error: ${serviceName}`, {
             error: error instanceof Error ? error.message : 'Unknown error',

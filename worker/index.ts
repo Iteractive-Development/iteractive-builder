@@ -104,9 +104,10 @@ async function handleUserAppRequest(request: Request, env: Env): Promise<Respons
 			statusText: dispatcherResponse.statusText,
 			headers,
 		});
-	} catch (error: any) {
+	} catch (error: unknown) {
 		// This block catches errors if the binding doesn't exist or if worker.fetch() fails.
-		logger.warn(`Error dispatching to worker '${appName}': ${error.message}`);
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+		logger.warn(`Error dispatching to worker '${appName}': ${errorMessage}`);
 		return new Response('An error occurred while loading this application.', { status: 500 });
 	}
 }

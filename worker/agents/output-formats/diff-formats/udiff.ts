@@ -419,7 +419,7 @@ function createFlexibleWhitespacePattern(normalizedLines: string[]): RegExp | nu
 		const testStr = 'test\ntest\ntest';
 		testRegex.test(testStr);
 		return testRegex;
-	} catch (error) {
+	} catch {
 		// If regex creation fails (complex content), fall back to null
 		return null;
 	}

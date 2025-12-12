@@ -113,7 +113,7 @@ export function GitCloneModal({
 			setCopied(true);
 			toast.success('Copied to clipboard!');
 			setTimeout(() => setCopied(false), 2500);
-		} catch (error) {
+		} catch {
 			toast.error('Failed to copy');
 		}
 	};

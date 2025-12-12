@@ -172,14 +172,22 @@ IMPORTANT:
         return state.extractedElements.get(tagName.toLowerCase()) || [];
     }
     
-    private isValidXmlState(state: any): state is XmlParsingState {
-        return state &&
-               typeof state.xmlParserState === 'string' &&
-               Array.isArray(state.elementStack) &&
-               state.extractedElements instanceof Map &&
-               state.targetElements instanceof Set &&
-               typeof state.contentBuffer === 'string' &&
-               Array.isArray(state.errorMessages);
+    private isValidXmlState(state: unknown): state is XmlParsingState {
+        return state !== null &&
+               typeof state === 'object' &&
+               state !== undefined &&
+               'xmlParserState' in state &&
+               typeof (state as { xmlParserState: unknown }).xmlParserState === 'string' &&
+               'elementStack' in state &&
+               Array.isArray((state as { elementStack: unknown }).elementStack) &&
+               'extractedElements' in state &&
+               (state as { extractedElements: unknown }).extractedElements instanceof Map &&
+               'targetElements' in state &&
+               (state as { targetElements: unknown }).targetElements instanceof Set &&
+               'contentBuffer' in state &&
+               typeof (state as { contentBuffer: unknown }).contentBuffer === 'string' &&
+               'errorMessages' in state &&
+               Array.isArray((state as { errorMessages: unknown }).errorMessages);
     }
     
     public initializeXmlState(config: XmlParsingConfig): XmlParsingState {
@@ -244,7 +252,7 @@ IMPORTANT:
         }
         
         // Prevent buffer from growing too large
-        if (state.contentBuffer.length > (state as any).maxBufferSize || 10000) {
+        if (state.contentBuffer.length > ((state as { maxBufferSize?: number }).maxBufferSize || 10000)) {
             // Keep last portion in case we have partial tags
             const keepSize = Math.min(2000, state.contentBuffer.length);
             state.contentBuffer = state.contentBuffer.substring(state.contentBuffer.length - keepSize);

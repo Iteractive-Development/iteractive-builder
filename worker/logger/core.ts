@@ -195,7 +195,7 @@ export class StructuredLogger {
 							if (!['name', 'message', 'stack'].includes(prop)) {
 								const descriptor = Object.getOwnPropertyDescriptor(value, prop);
 								if (descriptor && descriptor.enumerable) {
-									acc[prop] = (value as any)[prop];
+									acc[prop] = (value as unknown as Record<string, unknown>)[prop];
 								}
 							}
 							return acc;
@@ -224,10 +224,10 @@ export class StructuredLogger {
 			// Extract additional data excluding base fields
 			const {
 				level: _,
-				time,
-				component,
+				time: _time,
+				component: _component,
 				msg,
-				object,
+				object: _object,
 				error,
 				...additionalData
 			} = logEntry;

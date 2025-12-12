@@ -3,26 +3,11 @@
  * Provides global authentication modal management
  */
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { LoginModal } from './login-modal';
-import { useAuth } from '../../contexts/auth-context';
+import { useAuth } from '../../hooks/useAuth';
 import { setGlobalAuthModalTrigger } from '../../lib/api-client';
-
-interface AuthModalContextType {
-  showAuthModal: (context?: string, onSuccess?: () => void, intendedUrl?: string) => void;
-  hideAuthModal: () => void;
-  isAuthModalOpen: boolean;
-}
-
-const AuthModalContext = createContext<AuthModalContextType | undefined>(undefined);
-
-export function useAuthModal() {
-  const context = useContext(AuthModalContext);
-  if (context === undefined) {
-    throw new Error('useAuthModal must be used within an AuthModalProvider');
-  }
-  return context;
-}
+import { AuthModalContext, type AuthModalContextType } from '../../hooks/useAuthModal';
 
 interface AuthModalProviderProps {
   children: React.ReactNode;

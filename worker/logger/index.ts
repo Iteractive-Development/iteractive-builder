@@ -5,7 +5,7 @@
 export * from './types';
 export * from './core';
 
-import { createLogger, createObjectLogger, LoggerFactory } from './core';
+import { createLogger, createObjectLogger, LoggerFactory, StructuredLogger } from './core';
 import { DEFAULT_CONFIG } from './core';
 
 // Configure logger for Cloudflare Workers environment
@@ -94,13 +94,14 @@ export function LogMethod(component?: string) {
  * Class decorator for automatic logger injection
  */
 export function WithLogger(component?: string) {
-	return function <T extends new (...args: any[]) => {}>(constructor: T) {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	return function <T extends new (...args: any[]) => any>(constructor: T) {
 		return class extends constructor {
-			logger = createObjectLogger(
+			logger: StructuredLogger = createObjectLogger(
 				this,
 				component || constructor.name,
 			);
-			constructor(...args: any[]) {
+			constructor(...args: any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
 				super(...args);
 			}
 		};

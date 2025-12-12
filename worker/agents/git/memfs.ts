@@ -131,7 +131,7 @@ export class MemFS {
         return this.stat(path);
     }
     
-    async mkdir(_path: string, _options?: any): Promise<void> {
+    async mkdir(_path: string, _options?: Record<string, unknown>): Promise<void> {
         // No-op: directories implicit in paths
     }
     

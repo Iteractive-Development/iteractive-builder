@@ -201,7 +201,7 @@ export async function buildGatewayUrl(env: Env, providerOverride?: AIGatewayProv
                 url.pathname = providerOverride ? `${cleanPathname}/${providerOverride}` : `${cleanPathname}/compat`;
                 return url.toString();
             }
-        } catch (error) {
+        } catch {
             // Invalid URL, fall through to use bindings
             console.warn(`Invalid CLOUDFLARE_AI_GATEWAY_URL provided: ${env.CLOUDFLARE_AI_GATEWAY_URL}. Falling back to AI bindings.`);
         }
@@ -314,7 +314,7 @@ type InferArgsBase = {
         chunk_size: number;
         onChunk: (chunk: string) => void;
     };
-    tools?: ToolDefinition<any, any>[];
+    tools?: ToolDefinition<Record<string, unknown>, unknown>[];
     providerOverride?: 'cloudflare' | 'direct';
     userApiKeys?: Record<string, string>;
     abortSignal?: AbortSignal;

@@ -47,6 +47,10 @@ import { FileTreeBuilder } from './fileTreeBuilder';
 export { Sandbox as UserAppSandboxService, Sandbox as DeployerService} from "@cloudflare/sandbox";
 
 
+interface ClearErrorsResponseExtended extends ClearErrorsResponse {
+    clearedCount?: number;
+}
+
 interface InstanceMetadata {
     templateName: string;
     projectName: string;
@@ -153,7 +157,7 @@ export class SandboxSdkClient extends BaseSandboxService {
             this.logger.info('Creating new session', { sessionId, cwd });
             const session = await this.getSandbox().createSession({ id: sessionId, cwd });
             return session;
-        } catch (error) {
+        } catch {
             // If session already exists, get it
             this.logger.info('Session already exists, retrieving it', { sessionId, cwd });
             const existingSession = await this.getSandbox().getSession(sessionId);
@@ -1059,19 +1063,18 @@ export class SandboxSdkClient extends BaseSandboxService {
             }
             this.logger.info('Creating sandbox instance', { instanceId, templateName, projectName });
             
-            let results: {previewURL: string, tunnelURL: string, processId: string, allocatedPort: number} | undefined;
             await this.ensureTemplateExists(templateName);
 
             const [donttouchFiles, redactedFiles] = await Promise.all([
                 this.fetchDontTouchFiles(templateName),
                 this.fetchRedactedFiles(templateName)
             ]);
-            
+
             const moveTemplateResult = await this.safeSandboxExec(`mv ${templateName} ${instanceId}`);
             if (moveTemplateResult.exitCode !== 0) {
                 throw new Error(`Failed to move template: ${moveTemplateResult.stderr}`);
             }
-            
+
             const setupPromise = () => this.setupInstance(instanceId, projectName, localEnvVars);
             const setupResult = await setupPromise();
             if (!setupResult) {
@@ -1080,7 +1083,7 @@ export class SandboxSdkClient extends BaseSandboxService {
                     error: 'Failed to setup instance'
                 };
             }
-            results = setupResult;
+            const results = setupResult;
             // Store instance metadata
             const metadata = {
                 templateName: templateName,
@@ -1368,7 +1371,7 @@ export class SandboxSdkClient extends BaseSandboxService {
                     try {
                         const metadata = await this.getInstanceMetadata(templateOrInstanceId);
                         redactedPaths = new Set(metadata.redacted_files);
-                    } catch (error) {
+                    } catch {
                         this.logger.warn('Failed to get redacted files', { templateOrInstanceId });
                     }
                 }
@@ -1538,7 +1541,7 @@ export class SandboxSdkClient extends BaseSandboxService {
                 try {
                     response = JSON.parse(result.stdout);
                     this.logger.info(`getInstanceErrors - ${response.errors.length ? 'errors found' : ''}: ${result.stdout}`);
-                } catch (parseError) {
+                } catch {
                     this.logger.warn('Failed to parse CLI output as JSON', { stdout: result.stdout });
                     throw new Error('Invalid JSON response from CLI tools');
                 }
@@ -1574,7 +1577,7 @@ export class SandboxSdkClient extends BaseSandboxService {
 
     async clearInstanceErrors(instanceId: string): Promise<ClearErrorsResponse> {
         try {
-            let clearedCount = 0;
+            const clearedCount = 0;
 
             // Try enhanced error system first - clear ALL errors
             try {
@@ -1582,10 +1585,10 @@ export class SandboxSdkClient extends BaseSandboxService {
                 const result = await this.executeCommand(instanceId, cmd, { timeout: 15000 }); // 15 second timeout
                 
                 if (result.exitCode === 0) {
-                    let response: any;
+                    let response: ClearErrorsResponseExtended;
                     try {
                         response = JSON.parse(result.stdout);
-                    } catch (parseError) {
+                    } catch {
                         this.logger.warn('Failed to parse CLI output as JSON', { stdout: result.stdout });
                         throw new Error('Invalid JSON response from CLI tools');
                     }
@@ -1707,7 +1710,7 @@ export class SandboxSdkClient extends BaseSandboxService {
                         
                         // Split by lines and parse each error
                         const lines = output.split('\n');
-                        let currentError: any = null;
+                        let currentError: CodeIssue | null = null;
                         
                         for (const line of lines) {
                             // Match TypeScript error format: path(line,col): error TSxxxx: message
@@ -1819,7 +1822,7 @@ export class SandboxSdkClient extends BaseSandboxService {
             
             // Step 2: Parse wrangler config from KV
             this.logger.info('Reading wrangler configuration from KV');
-            let wranglerConfigContent = await env.VibecoderStore.get(this.getWranglerKVKey(instanceId));
+            const wranglerConfigContent = await env.VibecoderStore.get(this.getWranglerKVKey(instanceId));
             
             if (!wranglerConfigContent) {
                 // This should never happen unless KV itself has some issues

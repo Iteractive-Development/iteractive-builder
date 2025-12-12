@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, Component } from 'react';
+import { useState, useRef, useMemo, useCallback, Component } from 'react';
 import { Bug, X, Download, Mail, Maximize2, Minimize2, Clock, BookmarkPlus, Bookmark, Activity, BarChart3 } from 'lucide-react';
 import { Button } from '../../../components/primitives/button';
 import { captureDebugScreenshot } from '../../../utils/screenshot';
@@ -171,7 +171,7 @@ function DebugPanelCore({ messages, onClear, chatSessionId }: DebugPanelProps) {
               chars = lines * 50; // Estimate 50 chars per line
             }
             
-          } catch (parseError) {
+          } catch {
             // Use default estimates for unknown content
             lines = 50; // Default estimate
             chars = 2500; // Default estimate
@@ -280,10 +280,10 @@ function DebugPanelCore({ messages, onClear, chatSessionId }: DebugPanelProps) {
     }
   };
   
-  const processTimelineData = (messages: DebugMessage[]) => {
+  const processTimelineData = useCallback((messages: DebugMessage[]) => {
     try {
       if (!messages || messages.length === 0) return { events: [], lanes: [] };
-      
+
       const events = messages.map((msg, index) => ({
         id: msg.id || `msg-${index}`,
         timestamp: msg.timestamp || Date.now(),
@@ -294,7 +294,7 @@ function DebugPanelCore({ messages, onClear, chatSessionId }: DebugPanelProps) {
         duration: index > 0 ? (msg.timestamp || 0) - (messages[index - 1]?.timestamp || 0) : 0,
         isBookmarked: bookmarkedMessages.has(msg.id || '')
       }));
-      
+
       // Group events into lanes by category for better visualization
       const lanes = [
         { id: 'generation', label: 'Generation', color: 'bg-blue-100 border-blue-300' },
@@ -303,44 +303,44 @@ function DebugPanelCore({ messages, onClear, chatSessionId }: DebugPanelProps) {
         { id: 'deployment', label: 'Deployment', color: 'bg-orange-100 border-orange-300' },
         { id: 'system', label: 'System', color: 'bg-red-100 border-red-300' }
       ];
-      
+
       return { events, lanes };
     } catch (error) {
       console.error('Error processing timeline data:', error);
       return { events: [], lanes: [] };
     }
-  };
+  }, [bookmarkedMessages]);
   
   // Advanced performance analytics - only compute when panel is open
   const analyticsData = useMemo(() => {
     try {
       if (!isOpen) return null; // Performance optimization: don't compute when closed
-      
+
       const now = Date.now();
       const last24h = messages.filter(m => now - m.timestamp < 24 * 60 * 60 * 1000);
       const errors = messages.filter(m => m.type === 'error');
       const warnings = messages.filter(m => m.type === 'warning');
       const wsMessages = messages.filter(m => m.type === 'websocket');
-      
+
       // Calculate statistical metrics for message intervals
       const intervals = [];
       for (let i = 1; i < messages.length; i++) {
         intervals.push(messages[i].timestamp - messages[i-1].timestamp);
       }
-      
+
       const sortedIntervals = [...intervals].sort((a, b) => a - b);
-      const median = sortedIntervals.length > 0 ? 
-        sortedIntervals.length % 2 === 0 ? 
+      const median = sortedIntervals.length > 0 ?
+        sortedIntervals.length % 2 === 0 ?
           (sortedIntervals[sortedIntervals.length/2-1] + sortedIntervals[sortedIntervals.length/2]) / 2 :
           sortedIntervals[Math.floor(sortedIntervals.length/2)] : 0;
-      
+
       const p99Index = Math.ceil(sortedIntervals.length * 0.99) - 1;
       const p99 = sortedIntervals.length > 0 ? sortedIntervals[Math.max(0, p99Index)] : 0;
       const avgInterval = intervals.length > 0 ? intervals.reduce((a, b) => a + b, 0) / intervals.length : 0;
-      
+
       // Track operation-specific durations
       const operationMetrics = calculateOperationMetrics(wsMessages);
-      
+
       return {
         totalMessages: messages.length,
         last24h: last24h.length,
@@ -358,19 +358,19 @@ function DebugPanelCore({ messages, onClear, chatSessionId }: DebugPanelProps) {
       console.error('Error calculating analytics data:', error);
       return null;
     }
-  }, [messages, isOpen, bookmarkedMessages]);
+  }, [messages, isOpen]);
   
   // Timeline data processing - optimized for performance
   const timelineData = useMemo(() => {
     try {
       if (!isOpen || viewMode !== 'timeline') return null; // Only compute when timeline is active
-      
+
       return processTimelineData(messages);
     } catch (error) {
       console.error('Error processing timeline data:', error);
       return null;
     }
-  }, [messages, isOpen, viewMode, bookmarkedMessages]);
+  }, [messages, isOpen, viewMode, processTimelineData]);
   
   // notifications logic removed
   

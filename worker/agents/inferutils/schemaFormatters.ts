@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { createLogger, StructuredLogger } from '../../logger';
 // Markdown Parser: unified/remark
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
@@ -8,7 +9,12 @@ import type {
     Root, Content, Node as UnistNode,
     Heading, List, ListItem, Code, ThematicBreak
 } from 'mdast';
-import { createLogger, StructuredLogger } from '../../logger';
+
+interface ConvertToPrimitiveDebugInfo {
+    path: string | string[];
+    logger: ReturnType<typeof createLogger>;
+    debug: boolean;
+}
 
 // --- Existing Types and Logger Setup ---
 export type SchemaFormat = 'markdown';
@@ -99,9 +105,9 @@ export function formatSchemaAsMarkdown<T extends z.ZodRawShape>(schema: z.ZodObj
  * Recursive helper to format fields of an object.
  */
 function formatZodSchemaAsMarkdownFields(
-    schema: z.ZodObject<any>,
+    schema: z.ZodObject<z.ZodRawShape>,
     headingPrefix: string,
-    dataObject?: Record<string, any>,
+    dataObject?: Record<string, unknown>,
     debug: boolean = false,
     mode: 'template' | 'data' = dataObject ? 'data' : 'template'
 ): string {
@@ -269,7 +275,7 @@ function formatZodTypeAsMarkdown(
         if (typeof value === 'object') {
             // logger.debug(`[Format Data Path: ...${key}] Formatting object with ${Object.keys(value).length} keys.`);
             // Ensure value is not null before recursing
-            return `${heading}${description}\n\n${formatZodSchemaAsMarkdownFields(baseField, headingPrefix + '#', value as Record<string, any>, false, mode)}\n`;
+            return `${heading}${description}\n\n${formatZodSchemaAsMarkdownFields(baseField, headingPrefix + '#', value as Record<string, unknown>, false, mode)}\n`;
         } else {
             // Handle cases where data is missing or not an object for a required object schema
             if (mode === 'template') {
@@ -298,7 +304,7 @@ function formatZodTypeAsMarkdown(
                 if (itemSchema instanceof z.ZodObject) {
                     if (item && typeof item === 'object') {
                         // console.debug(`[Format Data Path: ...${key}[${index}]] Formatting object item with ${Object.keys(item).length} keys.`);
-                        itemsMarkdown += `${itemHeading}\n\n${formatZodSchemaAsMarkdownFields(itemSchema, itemHeadingPrefix + '#', item as Record<string, any>, false, mode)}\n`;
+                        itemsMarkdown += `${itemHeading}\n\n${formatZodSchemaAsMarkdownFields(itemSchema, itemHeadingPrefix + '#', item as Record<string, unknown>, false, mode)}\n`;
                     } else {
                         if (mode === 'template') {
                             logger.warn(`[Format Data Path: ...${key}[${index}]] Expected object item but got ${typeof item}. Rendering empty item.`);
@@ -381,7 +387,7 @@ function getDefaultValue(field: z.ZodTypeAny): unknown {
     return undefined;
 }
 
-function convertToPrimitive(value: any, schema: z.ZodTypeAny, debugInfo?: { path: string | string[], logger: any, debug: boolean }): any {
+function convertToPrimitive(value: unknown, schema: z.ZodTypeAny, debugInfo?: ConvertToPrimitiveDebugInfo): unknown {
     const { path = '?', logger: currentLogger = logger, debug = false } = debugInfo || {};
     const pathStr = Array.isArray(path) ? path.join('.') : path; // Ensure path is string for logs
 
@@ -418,7 +424,7 @@ function convertToPrimitive(value: any, schema: z.ZodTypeAny, debugInfo?: { path
     }
 
     // 2. Handle string input (trimming)
-    const stringValue = value.trim();
+    const stringValue = (value as string).trim();
     if (debug) currentLogger.debug(`[Convert Path: ${pathStr}] Processing trimmed string value: "${stringValue.substring(0, 100)}..."`);
 
 
@@ -760,7 +766,7 @@ export function parseMarkdownContent<OutputSchema extends z.AnyZodObject>(
 
 
     // 4. Map AST/Tree to Zod Schema Structure
-    let draftData: any;
+    let draftData: unknown;
     try {
         // Pass the original schema (including wrappers) to the mapping function
         draftData = mapSectionToSchema(sectionTree, schema, [], debug, schema); // Pass root schema
@@ -772,7 +778,7 @@ export function parseMarkdownContent<OutputSchema extends z.AnyZodObject>(
     } catch (error) {
         logger.error("Mapping section tree to schema failed:", error);
         // Return partially parsed data if available, otherwise default
-        return draftData ?? getDefaultValue(schema);
+        return (draftData ?? getDefaultValue(schema)) as z.infer<OutputSchema>;
     }
 
 
@@ -785,7 +791,7 @@ export function parseMarkdownContent<OutputSchema extends z.AnyZodObject>(
         console.error(JSON.stringify(validationResult.error.format(), null, 2));
         logger.warn('--- End Zod Validation Failure ---');
         // Return the draft data even if validation fails, allowing partial results
-        return draftData;
+        return draftData as z.infer<OutputSchema>;
     }
 
     if (debug) logger.debug('--- Markdown Parsed & Validated Successfully ---');
@@ -975,8 +981,8 @@ function mapSectionToSchema(
     schema: z.ZodTypeAny, // The schema for the *current* level being processed
     path: string[],
     debug: boolean,
-    rootSchema: z.ZodObject<any> // Keep a reference to the top-level schema if needed
-): any {
+    rootSchema: z.AnyZodObject // Keep a reference to the top-level schema if needed
+): unknown {
     const currentPath = path.join('.') || '<root>';
     const sectionHeadingText = section.heading ? mdastToString(section.heading) : '<root>'; // Use <root> for top level
     if (debug) logger.debug(`[Map Path: ${currentPath}] > Section: "${sectionHeadingText}", Target Schema: ${schema.constructor.name}`);
@@ -1010,7 +1016,7 @@ function mapSectionToSchema(
     if (baseSchema instanceof z.ZodObject) {
         if (debug) logger.debug(`[Map Path: ${currentPath}] Handling ZodObject.`);
         const shape = baseSchema.shape;
-        const outputObject: Record<string, any> = {};
+        const outputObject: Record<string, unknown> = {};
 
         // Initialize with default values for all keys in the schema
         // Important: Use the field definition from the shape for getDefaultValue
@@ -1090,7 +1096,7 @@ function mapSectionToSchema(
     if (baseSchema instanceof z.ZodArray) {
         if (debug) logger.debug(`[Map Path: ${currentPath}] Handling ZodArray.`);
         const itemSchema = baseSchema._def.type;
-        const results: any[] = [];
+        const results: unknown[] = [];
 
         // *** CHANGE: Use singularize for item name matching ***
         const arrayKey = path.length > 0 ? path[path.length - 1] : ''; // Get the key name for this array
@@ -1223,7 +1229,7 @@ function mapSectionToSchema(
     if (debug) logger.debug(`[Map Path: ${currentPath}] Handling Primitive/Other Schema (${baseSchema.constructor.name}).`);
     if (debug) {
         // Log nodes more concisely for primitives
-        logger.debug(`[Map Path: ${currentPath}] Nodes for primitive extraction:`, section.nodes.map(n => ({ type: n.type, value: (n as any).value?.substring(0, 30) ?? mdastToString(n).substring(0, 30) + '...' })));
+        logger.debug(`[Map Path: ${currentPath}] Nodes for primitive extraction:`, section.nodes.map(n => ({ type: n.type, value: (n as { value?: string }).value?.substring(0, 30) ?? mdastToString(n).substring(0, 30) + '...' })));
     }
     // Extract the raw string value from the section's nodes
     const extractedValue = extractPrimitiveValueFromNodes(section.nodes, { path: currentPath, logger: logger as ReturnType<typeof createLogger>, debug });

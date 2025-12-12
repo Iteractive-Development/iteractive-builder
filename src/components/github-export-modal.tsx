@@ -100,7 +100,7 @@ const ModalHeader: React.FC<{ mode: string; existingUrl?: string | null; onClose
     </div>
 );
 
-const StatusMessage: React.FC<{ icon: React.ComponentType<any>; iconColor: string; title: string; message: string; children?: React.ReactNode }> = 
+const StatusMessage: React.FC<{ icon: React.ComponentType<{ className?: string }>; iconColor: string; title: string; message: string; children?: React.ReactNode }> =
     ({ icon: Icon, iconColor, title, message, children }) => (
     <div className="text-center py-8">
         <Icon className={`w-12 h-12 ${iconColor} mx-auto mb-4`} />

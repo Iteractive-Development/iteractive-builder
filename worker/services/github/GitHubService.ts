@@ -17,6 +17,12 @@ import http from '@ashishkumar472/cf-git/http/web';
 import { prepareCloudflareButton } from '../../utils/deployToCf';
 import type { MemFS } from '../../agents/git/memfs';
 
+interface GitProgress {
+    phase: string;
+    loaded: number;
+    total: number;
+}
+
 export class GitHubService {
     private static readonly logger = createLogger('GitHubService');
 
@@ -411,13 +417,13 @@ export class GitHubService {
                     username: token, // GitHub accepts token as username
                     password: 'x-oauth-basic' // Or just empty string
                 }),
-                onAuthFailure: (url: any) => {
+                onAuthFailure: (url: string) => {
                     GitHubService.logger.error('Authentication failed', { url });
                 },
-                onAuthSuccess: (url: any) => {
+                onAuthSuccess: (url: string) => {
                     GitHubService.logger.info('Authentication successful', { url });
                 },
-                onProgress: (progress: any) => {
+                onProgress: (progress: GitProgress) => {
                     GitHubService.logger.info('Push progress', {
                         phase: progress.phase,
                         loaded: progress.loaded,

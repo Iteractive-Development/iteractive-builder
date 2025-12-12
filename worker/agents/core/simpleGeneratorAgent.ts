@@ -165,8 +165,8 @@ export class SimpleCodeGeneratorAgent extends Agent<Env, CodeGenState> {
 
     constructor(ctx: AgentContext, env: Env) {
         super(ctx, env);
-        this.sql`CREATE TABLE IF NOT EXISTS full_conversations (id TEXT PRIMARY KEY, messages TEXT)`;
-        this.sql`CREATE TABLE IF NOT EXISTS compact_conversations (id TEXT PRIMARY KEY, messages TEXT)`;
+        void this.sql`CREATE TABLE IF NOT EXISTS full_conversations (id TEXT PRIMARY KEY, messages TEXT)`;
+        void this.sql`CREATE TABLE IF NOT EXISTS compact_conversations (id TEXT PRIMARY KEY, messages TEXT)`;
         
         // Initialize StateManager
         this.stateManager = new StateManager(
@@ -359,7 +359,7 @@ export class SimpleCodeGeneratorAgent extends Agent<Env, CodeGenState> {
         const userModelConfigs: Record<string, ModelConfig> = {};
         for (const [actionKey, mergedConfig] of Object.entries(userConfigsRecord)) {
             if (mergedConfig.isUserOverride) {
-                const { isUserOverride, userConfigId, ...modelConfig } = mergedConfig;
+                const { isUserOverride: _isUserOverride, userConfigId: _userConfigId, ...modelConfig } = mergedConfig;
                 userModelConfigs[actionKey] = modelConfig;
             }
         }
@@ -503,7 +503,9 @@ export class SimpleCodeGeneratorAgent extends Agent<Env, CodeGenState> {
                 if (Array.isArray(parsed)) {
                     fullHistory = parsed as ConversationMessage[];
                 }
-            } catch (_e) {}
+            } catch {
+                // Intentionally empty - we'll use empty array if parsing fails
+            }
         }
         if (fullHistory.length === 0) {
             fullHistory = currentConversation;
@@ -517,7 +519,9 @@ export class SimpleCodeGeneratorAgent extends Agent<Env, CodeGenState> {
                 if (Array.isArray(parsed)) {
                     runningHistory = parsed as ConversationMessage[];
                 }
-            } catch (_e) {}
+            } catch {
+                // Intentionally empty - we'll use empty array if parsing fails
+            }
         }
         if (runningHistory.length === 0) {
             runningHistory = currentConversation;
@@ -550,8 +554,8 @@ export class SimpleCodeGeneratorAgent extends Agent<Env, CodeGenState> {
         const serializedCompact = JSON.stringify(conversations.runningHistory);
         try {
             this.logger().info(`Saving conversation state ${conversations.id}, full_length: ${serializedFull.length}, compact_length: ${serializedCompact.length}`);
-            this.sql`INSERT OR REPLACE INTO compact_conversations (id, messages) VALUES (${conversations.id}, ${serializedCompact})`;
-            this.sql`INSERT OR REPLACE INTO full_conversations (id, messages) VALUES (${conversations.id}, ${serializedFull})`;
+            void this.sql`INSERT OR REPLACE INTO compact_conversations (id, messages) VALUES (${conversations.id}, ${serializedCompact})`;
+            void this.sql`INSERT OR REPLACE INTO full_conversations (id, messages) VALUES (${conversations.id}, ${serializedFull})`;
         } catch (error) {
             this.logger().error(`Failed to save conversation state ${conversations.id}`, error);
         }
@@ -1565,7 +1569,7 @@ export class SimpleCodeGeneratorAgent extends Agent<Env, CodeGenState> {
             if (this.state.sandboxInstanceId) {
                 try {
                     ok = await this.getSandboxServiceClient().updateProjectName(this.state.sandboxInstanceId, newName);
-                } catch (_) {
+                } catch {
                     ok = false;
                 }
             }
@@ -1606,13 +1610,13 @@ export class SimpleCodeGeneratorAgent extends Agent<Env, CodeGenState> {
         ]);
         const filtered: Partial<Blueprint> = {};
         for (const k of keys) {
-            if (allowed.has(k) && typeof (patch as any)[k] !== 'undefined') {
-                (filtered as any)[k] = (patch as any)[k];
+            if (allowed.has(k) && typeof (patch as Record<string, unknown>)[k] !== 'undefined') {
+                (filtered as Record<string, unknown>)[k] = (patch as Record<string, unknown>)[k];
             }
         }
         if (typeof filtered.projectName === 'string' && filtered.projectName) {
             await this.updateProjectName(filtered.projectName);
-            delete (filtered as any).projectName;
+            delete (filtered as Partial<Blueprint>).projectName;
         }
         const updated: Blueprint = { ...this.state.blueprint, ...(filtered as Blueprint) } as Blueprint;
         this.setState({
@@ -1643,7 +1647,7 @@ export class SimpleCodeGeneratorAgent extends Agent<Env, CodeGenState> {
     async execCommands(commands: string[], shouldSave: boolean, timeout?: number): Promise<ExecuteCommandsResponse> {
         const { sandboxInstanceId } = this.state;
         if (!sandboxInstanceId) {
-            return { success: false, results: [], error: 'No sandbox instance' } as any;
+            return { success: false, results: [], error: 'No sandbox instance' };
         }
         const result = await this.getSandboxServiceClient().executeCommands(sandboxInstanceId, commands, timeout);
         if (shouldSave) {
@@ -1735,7 +1739,7 @@ export class SimpleCodeGeneratorAgent extends Agent<Env, CodeGenState> {
             phaseName
         });
 
-        let skippedFiles: { path: string; purpose: string; diff: string }[] = [];
+        const skippedFiles: { path: string; purpose: string; diff: string }[] = [];
 
         // Enforce template donttouch constraints
         const templateDetails = this.getTemplateDetails();

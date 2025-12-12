@@ -75,7 +75,7 @@ export class DatabaseService {
                 healthy: true,
                 timestamp: new Date().toISOString(),
             };
-        } catch (error) {
+        } catch {
             return {
                 healthy: false,
                 timestamp: new Date().toISOString(),

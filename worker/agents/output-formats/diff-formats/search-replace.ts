@@ -537,7 +537,7 @@ function analyzeSearchBlockQuality(searchText: string, targetContent: string): {
 				if (occurrences > 3) {
 					uniquenessScore *= 0.85;
 				}
-			} catch (e) {
+			} catch {
 				// Skip regex errors
 			}
 		}
@@ -557,7 +557,7 @@ function analyzeSearchBlockQuality(searchText: string, targetContent: string): {
 					specificity *= 0.8;
 					warnings.push(`Mathematical pattern "${pattern}" may cause ambiguity (${occurrences} occurrences)`);
 				}
-			} catch (e) {
+			} catch {
 				// Skip regex errors
 			}
 		}
@@ -572,7 +572,7 @@ function analyzeSearchBlockQuality(searchText: string, targetContent: string): {
 				uniquenessScore *= 0.6;
 				warnings.push('Switch case detected with multiple similar cases - high ambiguity risk');
 			}
-		} catch (e) {
+		} catch {
 			// Skip regex errors
 		}
 	}
@@ -693,7 +693,7 @@ function validateMatchContext(_content: string, matchText: string, _startLine: n
 						contextScore *= (1 - penalty);
 					}
 				}
-			} catch (e) {
+			} catch {
 				// Skip regex errors
 			}
 		}

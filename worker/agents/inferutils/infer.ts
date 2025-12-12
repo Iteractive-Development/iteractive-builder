@@ -33,7 +33,7 @@ interface InferenceParamsBase {
     modelName?: AIModels | string;
     retryLimit?: number;
     agentActionName: AgentActionKey;
-    tools?: ToolDefinition<any, any>[];
+    tools?: ToolDefinition<Record<string, unknown>, unknown>[];
     stream?: {
         chunk_size: number;
         onChunk: (chunk: string) => void;

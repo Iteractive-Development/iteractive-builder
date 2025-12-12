@@ -102,7 +102,7 @@ export class JWTUtils {
                 jti: payload.jti as string | undefined,
                 sessionId: payload.sessionId as string
             };
-        } catch (error) {
+        } catch {
             return null;
         }
     }

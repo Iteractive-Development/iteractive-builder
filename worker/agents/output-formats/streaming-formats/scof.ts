@@ -3,9 +3,8 @@ import { FileGenerationOutputType } from "../../schemas";
 import { applyDiff } from '../diff-formats/udiff';
 import { extractCommands } from '../../utils/common';
 
-// SCOF-specific parsing state with comprehensive tracking
-export interface SCOFParsingState extends ParsingState {
-}
+// Re-export ParsingState as SCOFParsingState for type compatibility
+export type SCOFParsingState = ParsingState;
 
 /**
  * SCOF (Shell Command Output Format) implementation with robust chunk handling
@@ -36,13 +35,20 @@ export class SCOFFormat extends CodeGenerationFormat {
         return state;
     }
     
-    private isValidSCOFState(parsingState: any): parsingState is SCOFParsingState {
-        return parsingState &&
-               typeof parsingState.currentMode === 'string' &&
-               parsingState.openedFiles instanceof Set &&
-               parsingState.closedFiles instanceof Set &&
-               typeof parsingState.contentBuffer === 'string' &&
-               typeof parsingState.partialLineBuffer === 'string';
+    private isValidSCOFState(parsingState: unknown): parsingState is SCOFParsingState {
+        return parsingState !== null &&
+               typeof parsingState === 'object' &&
+               parsingState !== undefined &&
+               'currentMode' in parsingState &&
+               typeof (parsingState as { currentMode: unknown }).currentMode === 'string' &&
+               'openedFiles' in parsingState &&
+               (parsingState as { openedFiles: unknown }).openedFiles instanceof Set &&
+               'closedFiles' in parsingState &&
+               (parsingState as { closedFiles: unknown }).closedFiles instanceof Set &&
+               'contentBuffer' in parsingState &&
+               typeof (parsingState as { contentBuffer: unknown }).contentBuffer === 'string' &&
+               'partialLineBuffer' in parsingState &&
+               typeof (parsingState as { partialLineBuffer: unknown }).partialLineBuffer === 'string';
     }
     
     private initializeSCOFState(): SCOFParsingState {

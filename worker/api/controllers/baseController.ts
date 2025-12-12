@@ -69,7 +69,7 @@ export abstract class BaseController {
     static async executeWithErrorHandling<T>(
         operation: () => Promise<T>,
         operationName: string,
-        context?: Record<string, any>
+        context?: Record<string, unknown>
     ): Promise<T | Response> {
         return ControllerErrorHandler.handleControllerOperation(operation, operationName, context);
     }
@@ -85,7 +85,7 @@ export abstract class BaseController {
      * Require authentication with standardized error
      */
     static requireAuthentication(user: unknown): void {
-        ControllerErrorHandler.requireAuthentication(user);
+        ControllerErrorHandler.requireAuthentication(user as AuthUser | null | undefined);
     }
 
     /**
