@@ -8,7 +8,7 @@ import { ChevronRight, AlertCircle } from 'lucide-react';
 import { usePlatformStatus } from '@/hooks/use-platform-status';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import clsx from 'clsx';
 
 export function GlobalHeader() {
@@ -18,6 +18,7 @@ export function GlobalHeader() {
 	const hasMaintenanceMessage = Boolean(status.hasActiveMessage && status.globalUserMessage.trim().length > 0);
 	const hasChangeLogs = Boolean(status.changeLogs && status.changeLogs.trim().length > 0);
 	const { pathname } = useLocation();
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (!hasChangeLogs) {
@@ -52,26 +53,33 @@ export function GlobalHeader() {
 							{user && (
 								<SidebarTrigger className="h-8 w-8 text-text-primary rounded-md hover:bg-orange-50/40 transition-colors duration-200" />
 							)}
-							<img
-								src="/logo-primary.svg"
-								alt="Iteractive Builder Logo"
-								className="flex-shrink-0 transition-all duration-300 dark:hidden"
+							<button
+								onClick={() => navigate('/')}
+								className="flex-shrink-0 transition-all duration-300 hover:opacity-80"
+								aria-label="Home"
 								style={{
-									width: '28px',
-									height: '28px',
 									marginLeft: user ? '8px' : '0',
 								}}
-							/>
-							<img
-								src="/logo-dark.svg"
-								alt="Iteractive Builder Logo"
-								className="flex-shrink-0 transition-all duration-300 hidden dark:block"
-								style={{
-									width: '28px',
-									height: '28px',
-									marginLeft: user ? '8px' : '0',
-								}}
-							/>
+							>
+								<img
+									src="/logo-primary.svg"
+									alt="Iteractive Builder Logo"
+									className="dark:hidden"
+									style={{
+										width: '28px',
+										height: '28px',
+									}}
+								/>
+								<img
+									src="/logo-dark.svg"
+									alt="Iteractive Builder Logo"
+									className="hidden dark:block"
+									style={{
+										width: '28px',
+										height: '28px',
+									}}
+								/>
+							</button>
 							{user && hasMaintenanceMessage && (
 								<button
 									type="button"
