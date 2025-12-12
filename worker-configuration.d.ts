@@ -16,6 +16,51 @@ declare namespace Cloudflare {
 		MAX_SANDBOX_INSTANCES: "10";
 		SANDBOX_INSTANCE_TYPE: "standard-3";
 		USE_CLOUDFLARE_IMAGES: "true";
+
+		// Authentication & Security
+		JWT_SECRET: string;
+		AI_PROXY_JWT_SECRET: string;
+		SECRETS_ENCRYPTION_KEY: string;
+
+		// Cloudflare API & Infrastructure
+		CLOUDFLARE_ACCOUNT_ID: string;
+		CLOUDFLARE_API_TOKEN: string;
+		CF_ACCESS_ID: string;
+		CF_ACCESS_SECRET: string;
+
+		// AI Service Providers
+		PLATFORM_MODEL_PROVIDERS: string;
+		CLOUDFLARE_AI_GATEWAY_URL?: string;
+		CLOUDFLARE_AI_GATEWAY_TOKEN: string;
+		OPENROUTER_API_KEY: string;
+		GOOGLE_AI_STUDIO_API_KEY: string;
+		ANTHROPIC_API_KEY: string;
+
+		// OAuth Providers
+		GOOGLE_CLIENT_ID: string;
+		GOOGLE_CLIENT_SECRET: string;
+		GITHUB_CLIENT_ID: string;
+		GITHUB_CLIENT_SECRET: string;
+		GITHUB_EXPORTER_CLIENT_ID: string;
+		GITHUB_EXPORTER_CLIENT_SECRET: string;
+
+		// Error Tracking
+		SENTRY_DSN: string;
+
+		// Sandbox Configuration
+		SANDBOX_SERVICE_TYPE: string;
+		SANDBOX_SERVICE_URL: string;
+		SANDBOX_SERVICE_API_KEY: string;
+		ALLOCATION_STRATEGY: string;
+		USE_TUNNEL_FOR_PREVIEW: string;
+
+		// External APIs
+		SERPAPI_KEY: string;
+
+		// Environment Configuration
+		ENVIRONMENT: string;
+		CUSTOM_PREVIEW_DOMAIN: string;
+
 		CodeGenObject: DurableObjectNamespace<import("./worker/index").CodeGeneratorAgent>;
 		Sandbox: DurableObjectNamespace<import("./worker/index").UserAppSandboxService>;
 		DORateLimitStore: DurableObjectNamespace<import("./worker/index").DORateLimitStore>;
@@ -34,5 +79,5 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "TEMPLATES_REPOSITORY" | "ALLOWED_EMAIL" | "DISPATCH_NAMESPACE" | "ENABLE_READ_REPLICAS" | "CLOUDFLARE_AI_GATEWAY" | "CUSTOM_DOMAIN" | "MAX_SANDBOX_INSTANCES" | "SANDBOX_INSTANCE_TYPE" | "USE_CLOUDFLARE_IMAGES">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "TEMPLATES_REPOSITORY" | "ALLOWED_EMAIL" | "DISPATCH_NAMESPACE" | "ENABLE_READ_REPLICAS" | "CLOUDFLARE_AI_GATEWAY" | "CUSTOM_DOMAIN" | "MAX_SANDBOX_INSTANCES" | "SANDBOX_INSTANCE_TYPE" | "USE_CLOUDFLARE_IMAGES" | "JWT_SECRET" | "AI_PROXY_JWT_SECRET" | "SECRETS_ENCRYPTION_KEY" | "CLOUDFLARE_ACCOUNT_ID" | "CLOUDFLARE_API_TOKEN" | "CF_ACCESS_ID" | "CF_ACCESS_SECRET" | "PLATFORM_MODEL_PROVIDERS" | "CLOUDFLARE_AI_GATEWAY_URL" | "CLOUDFLARE_AI_GATEWAY_TOKEN" | "OPENROUTER_API_KEY" | "GOOGLE_AI_STUDIO_API_KEY" | "ANTHROPIC_API_KEY" | "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "GITHUB_CLIENT_ID" | "GITHUB_CLIENT_SECRET" | "GITHUB_EXPORTER_CLIENT_ID" | "GITHUB_EXPORTER_CLIENT_SECRET" | "SENTRY_DSN" | "SANDBOX_SERVICE_TYPE" | "SANDBOX_SERVICE_URL" | "SANDBOX_SERVICE_API_KEY" | "ALLOCATION_STRATEGY" | "USE_TUNNEL_FOR_PREVIEW" | "SERPAPI_KEY" | "ENVIRONMENT" | "CUSTOM_PREVIEW_DOMAIN">> {}
 }

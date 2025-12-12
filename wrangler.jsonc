@@ -51,7 +51,7 @@
     "dispatch_namespaces": [
         {
             "binding": "DISPATCHER",
-            "namespace": "vibesdk-default-namespace",
+            "namespace": "iteractive-builder-namespace",
             "remote": true
         }
     ],
