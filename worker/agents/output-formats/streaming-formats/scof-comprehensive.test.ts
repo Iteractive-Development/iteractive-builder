@@ -5,9 +5,9 @@ import { CodeGenerationStreamingState } from './base';
 describe('SCOF Parser - Comprehensive Tests', () => {
     let parser: SCOFFormat;
     let mockCallbacks: {
-        onFileOpen: ReturnType<typeof vi.fn>;
-        onFileChunk: ReturnType<typeof vi.fn>;
-        onFileClose: ReturnType<typeof vi.fn>;
+        onFileOpen: any;
+        onFileChunk: any;
+        onFileClose: any;
     };
 
     beforeEach(() => {
