@@ -13,17 +13,57 @@ export default defineConfig({
 		exclude: ['format', 'editor.all'],
 		include: ['monaco-editor/esm/vs/editor/editor.api'],
 		force: true,
+		rolldownOptions: {
+			output: {
+				minify: false, // Development builds
+			},
+			// Monaco Editor and special dependencies handling
+			external: (id) => {
+				// Keep Monaco workers and language files external
+				if (id.includes('monaco-editor')) {
+					return id.includes('worker') ||
+						   id.includes('language') ||
+						   id.includes('vs/basic-languages');
+				}
+				return false;
+			},
+			// Preserve module side effects for certain packages
+			treeshake: {
+				moduleSideEffects: (id) => {
+					return id.includes('monaco-editor') ||
+						   id.includes('format');
+				},
+			},
+		},
 	},
 
-	// build: {
-	//     rollupOptions: {
-	//       output: {
-	//             advancedChunks: {
-	//                 groups: [{name: 'vendor', test: /node_modules/}]
-	//             }
-	//         }
-	//     }
-	// },
+	build: {
+		rollupOptions: {
+			output: {
+				manualChunks(id) {
+					// Separate vendor libraries
+					if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+						return 'vendor';
+					}
+					if (id.includes('@radix-ui') || id.includes('lucide-react')) {
+						return 'ui';
+					}
+					if (id.includes('date-fns') || id.includes('clsx') || id.includes('tailwind-merge')) {
+						return 'utils';
+					}
+					// Monaco core vs language workers
+					if (id.includes('monaco-editor/esm/vs/editor/editor.api')) {
+						return 'monaco-core';
+					}
+					// Separate heavy language workers
+					if (id.includes('monaco-editor/esm/vs/language/')) {
+						return 'monaco-languages';
+					}
+				}
+			}
+		},
+		chunkSizeWarningLimit: 1000
+	},
 	plugins: [
 		react(),
 		svgr(),

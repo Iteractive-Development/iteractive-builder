@@ -1,37 +1,16 @@
-import React, { memo, useEffect, useRef } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import * as monaco from 'monaco-editor';
 import { useTheme } from '@/hooks/useTheme';
-
-import 'monaco-editor/esm/vs/editor/editor.all.js';
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
-import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
-import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
-import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+import { getWorker } from './worker-loader';
+import { loadLanguageFeatures } from './language-loader';
 
 import defaultCode from '../../routes?raw';
 import './monaco-editor.module.css';
 
+// Set up dynamic worker environment
 self.MonacoEnvironment = {
-	getWorker(_, label) {
-		if (label === 'json') {
-			return new jsonWorker();
-		}
-		if (label === 'css' || label === 'scss' || label === 'less') {
-			return new cssWorker();
-		}
-		if (label === 'html' || label === 'handlebars' || label === 'razor') {
-			return new htmlWorker();
-		}
-		if (
-			label === 'typescript' ||
-			label === 'javascript' ||
-			label === 'typescriptreact' ||
-			label === 'javascriptreact'
-		) {
-			return new tsWorker();
-		}
-		return new editorWorker();
+	getWorker: async (moduleId: string, label: string) => {
+		return await getWorker(moduleId, label);
 	},
 };
 
@@ -141,6 +120,8 @@ export const MonacoEditor = memo<MonacoEditorProps>(function MonacoEditor({
 	const prevValue = useRef<string>(createOptions.value || '');
 	const stickyScroll = useRef(true);
 	const { theme } = useTheme();
+	const [isInitialized, setIsInitialized] = useState(false);
+	const [isLanguageLoaded, setIsLanguageLoaded] = useState(false);
 
 	const shouldEnableTypeScript = React.useMemo(() => {
 		if (enableTypeScriptFeatures === 'auto') {
@@ -199,8 +180,20 @@ export const MonacoEditor = memo<MonacoEditorProps>(function MonacoEditor({
 		}
 	}, [shouldEnableTypeScript]);
 
-
+	// Load language features dynamically
 	useEffect(() => {
+		const language = createOptions.language || 'typescript';
+		loadLanguageFeatures(language)
+			.then(() => setIsLanguageLoaded(true))
+			.catch(error => {
+				console.error(`Failed to load language features for ${language}:`, error);
+				setIsLanguageLoaded(true); // Continue even if language loading fails
+			});
+	}, [createOptions.language]);
+
+	// Initialize editor only after language features are loaded
+	useEffect(() => {
+		if (!isLanguageLoaded || isInitialized || !containerRef.current) return;
 		let configuredTheme = theme;
 		if (theme === 'system') {
 			configuredTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
@@ -241,8 +234,10 @@ export const MonacoEditor = memo<MonacoEditorProps>(function MonacoEditor({
 			}
 			editor.current?.dispose();
 		};
+
+		setIsInitialized(true);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [isLanguageLoaded, theme]);
 
 	useEffect(() => {
 		if (editor.current && createOptions.value !== prevValue.current) {
